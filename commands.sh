@@ -1,11 +1,11 @@
 # ZOOKEEPER
 $KAFKA_HOME/bin/zookeeper-server-start.sh -daemon  $KAFKA_HOME/config/zookeeper.properties
-tail -f /$KAFKA_HOME/logs/zookeeper.out
+tail -f $KAFKA_HOME/logs/zookeeper.out
 $KAFKA_HOME/bin/zookeeper-server-stop.sh
 
 # KAFKA SERVER
 $KAFKA_HOME/bin/kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properties
-tail -f /$KAFKA_HOME/logs/kafkaServerOut.out
+tail -f $KAFKA_HOME/logs/kafkaServer.out
 $KAFKA_HOME/bin/kafka-server-stop.sh
 
 # KAFDROP (UI)
