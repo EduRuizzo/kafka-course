@@ -2,7 +2,10 @@ module github.com/EduRuizzo/kafka-course
 
 go 1.19
 
-require github.com/twmb/franz-go v1.9.0
+require (
+	github.com/google/uuid v1.3.0
+	github.com/twmb/franz-go v1.9.0
+)
 
 require (
 	github.com/klauspost/compress v1.15.9 // indirect

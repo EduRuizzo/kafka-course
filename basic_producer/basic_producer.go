@@ -4,8 +4,8 @@ import (
 	"context"
 	"log"
 	"sync"
-	"time"
 
+	"github.com/google/uuid"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
@@ -29,7 +29,7 @@ func main() {
 	// to allow for synchronous or asynchronous production.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	record := &kgo.Record{Topic: "getting-started", Key: []byte("myKey"), Value: []byte(time.Now().String())}
+	record := &kgo.Record{Topic: "getting-started", Key: []byte("myKey"), Value: []byte(uuid.New().String())}
 	cl.Produce(ctx, record, func(_ *kgo.Record, err error) {
 		defer wg.Done()
 		if err != nil {
