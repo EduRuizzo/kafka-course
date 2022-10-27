@@ -4,13 +4,14 @@ import (
 	"context"
 	"log"
 	"sync"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 func main() {
-	seeds := []string{"localhost:9092"}
+	seeds := []string{"[::1]:9092"}
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
 	cl, err := kgo.NewClient(
@@ -22,7 +23,12 @@ func main() {
 		log.Fatal(err)
 	}
 	defer cl.Close()
-	ctx := context.Background()
+	ctx, cancel := context.WithTimeout(context.Background(), 3*time.Second)
+	defer cancel()
+	err = cl.Ping(ctx)
+	if err != nil {
+		log.Fatal(err)
+	}
 
 	// 1.) Producing a message
 	// All record production goes through Produce, and the callback can be used

@@ -8,7 +8,7 @@ $KAFKA_HOME/bin/kafka-server-start.sh -daemon $KAFKA_HOME/config/server.properti
 tail -f $KAFKA_HOME/logs/kafkaServer.out
 $KAFKA_HOME/bin/kafka-server-stop.sh
 
-# KAFDROP (UI)
+# KAFDROP (UI) ([::1]:9092 si listeners=PLAINTEXT://[::1]:9092 en server.properties)
 java -jar kafdrop-3.30.0.jar --kafka.brokerCOnnect=localhost:9092
 
 # CREATE TOPIC
