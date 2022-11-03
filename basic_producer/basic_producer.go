@@ -2,15 +2,25 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"log"
 	"sync"
 	"time"
 
+	"flag"
+
+	"github.com/EduRuizzo/kafka-course/model"
 	"github.com/google/uuid"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 func main() {
+	topic, key, name := "", "", ""
+	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
+	flag.StringVar(&key, "k", "myKey", "kafka key")
+	flag.StringVar(&name, "n", "JoJo", "name for the record value")
+	flag.Parse()
+
 	seeds := []string{"[::1]:9092"}
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
@@ -35,7 +45,16 @@ func main() {
 	// to allow for synchronous or asynchronous production.
 	var wg sync.WaitGroup
 	wg.Add(1)
-	record := &kgo.Record{Topic: "getting-started", Key: []byte("myKey"), Value: []byte(uuid.New().String())}
+	val := model.BasicPayload{
+		Name: name,
+		Uuid: uuid.NewString(),
+		Date: time.Now(),
+	}
+	v, err := json.Marshal(val)
+	if err != nil {
+		log.Fatal("error marshaling payload:", err)
+	}
+	record := &kgo.Record{Topic: topic, Key: []byte(key), Value: v}
 	cl.Produce(ctx, record, func(_ *kgo.Record, err error) {
 		defer wg.Done()
 		if err != nil {

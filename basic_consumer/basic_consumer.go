@@ -2,15 +2,17 @@ package main
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/EduRuizzo/kafka-course/model"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
 func main() {
-	seeds := []string{"localhost:9092"}
+	seeds := []string{"[::1]:9092"}
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
 	cl, err := kgo.NewClient(
@@ -46,15 +48,31 @@ func main() {
 		// or a callback function.
 		fetches.EachPartition(func(p kgo.FetchTopicPartition) {
 			for _, record := range p.Records {
-				fmt.Println(string(record.Value), "from range inside a callback!")
+				var val model.BasicPayload
+
+				err := json.Unmarshal(record.Value, &val)
+				if err != nil {
+					log.Println("error unmarshalling record value")
+					continue
+				}
+				fmt.Printf("Key: %s, Value %+v, from range inside a callback!\n", record.Key, val)
 			}
 
 			// We can even use a second callback!
 			p.EachRecord(func(record *kgo.Record) {
-				fmt.Println(string(record.Value), "from a second callback!")
+				var val model.BasicPayload
+				err := json.Unmarshal(record.Value, &val)
+				if err != nil {
+					log.Println("error unmarshalling record value")
+				} else {
+					fmt.Printf("Key: %s, Value %+v, from a second callback!\n", record.Key, val)
+				}
 			})
 		})
-		cl.CommitUncommittedOffsets(ctx)
+		err = cl.CommitUncommittedOffsets(ctx)
+		if err != nil {
+			log.Fatal("couldn´t commit offsets", err)
+		}
 		time.Sleep(100 * time.Millisecond)
 	}
 }
