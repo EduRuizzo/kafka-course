@@ -6,6 +6,7 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"syscall"
 
 	"github.com/EduRuizzo/kafka-course/config"
 	"github.com/EduRuizzo/kafka-course/pipeconsumer"
@@ -17,7 +18,7 @@ func main() {
 
 	// gracefully exit on keyboard interrupt
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt)
+	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
 
 	flag.StringVar(&group, "g", "kgo-group", "name of the consumer group")
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
