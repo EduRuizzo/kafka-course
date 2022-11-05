@@ -3,22 +3,32 @@ package main
 import (
 	"context"
 	"encoding/json"
+	"flag"
 	"fmt"
 	"log"
 	"time"
 
+	"github.com/EduRuizzo/kafka-course/config"
 	"github.com/EduRuizzo/kafka-course/model"
 	"github.com/twmb/franz-go/pkg/kgo"
 )
 
+const sl = 100
+
 func main() {
-	seeds := []string{"[::1]:9092"}
+	var group, topic string
+
+	flag.StringVar(&group, "g", "kgo-group", "name of the consumer group")
+	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
+	flag.Parse()
+
+	cfg := config.MustNewClient()
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
 	cl, err := kgo.NewClient(
-		kgo.SeedBrokers(seeds...),
-		kgo.ConsumerGroup("kgo-group"),
-		kgo.ConsumeTopics("getting-started"),
+		kgo.SeedBrokers(cfg.SeedBrokers...),
+		kgo.ConsumerGroup(group),
+		kgo.ConsumeTopics(topic),
 		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
 		kgo.DisableAutoCommit(),
 	)
@@ -50,7 +60,7 @@ func main() {
 			for _, record := range p.Records {
 				var val model.BasicPayload
 
-				err := json.Unmarshal(record.Value, &val)
+				err = json.Unmarshal(record.Value, &val)
 				if err != nil {
 					log.Println("error unmarshalling record value")
 					continue
@@ -61,7 +71,7 @@ func main() {
 			// We can even use a second callback!
 			p.EachRecord(func(record *kgo.Record) {
 				var val model.BasicPayload
-				err := json.Unmarshal(record.Value, &val)
+				err = json.Unmarshal(record.Value, &val)
 				if err != nil {
 					log.Println("error unmarshalling record value")
 				} else {
@@ -69,10 +79,12 @@ func main() {
 				}
 			})
 		})
+
 		err = cl.CommitUncommittedOffsets(ctx)
 		if err != nil {
-			log.Fatal("couldn´t commit offsets", err)
+			log.Panic("couldn´t commit offsets", err)
 		}
-		time.Sleep(100 * time.Millisecond)
+
+		time.Sleep(sl * time.Millisecond)
 	}
 }

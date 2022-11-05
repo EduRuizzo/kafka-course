@@ -6,6 +6,6 @@ import (
 
 type BasicPayload struct {
 	Name string    `json:"name"`
-	Uuid string    `json:"uuid"`
+	UUID string    `json:"uuid"`
 	Date time.Time `json:"date"`
 }
