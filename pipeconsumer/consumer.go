@@ -13,6 +13,7 @@ import (
 )
 
 const pollLoopPeriod = 20 * time.Millisecond
+const pollTimeout = 5 * time.Second
 
 type Consumer struct {
 	kcl    *kgo.Client
@@ -36,6 +37,7 @@ func NewConsumer(kcl *kgo.Client, group string) *Consumer {
 }
 
 func (co *Consumer) Close() {
+	co.logger.Info("closing consumer")
 	co.close <- true
 	co.kcl.Close()
 	co.logger.Info("consumer closed correctly")
@@ -43,33 +45,39 @@ func (co *Consumer) Close() {
 
 func (co *Consumer) PollFetches(ctx context.Context) {
 	co.logger.Info("consumer poll loop started")
+
 	tick := time.NewTicker(pollLoopPeriod)
 
 	for {
 		select {
 		case <-co.close:
-			co.logger.Info("gracefully closing consume loop")
+			co.logger.Info("consume loop gracefully closed")
 			return
 		case <-tick.C:
-			fet := co.kcl.PollFetches(ctx)
+			ctxt, c := context.WithTimeout(ctx, pollTimeout)
+			fet := co.kcl.PollFetches(ctxt)
+			select {
+			case <-ctx.Done(): // continue loop if no fetches within timeout
+			default:
+				fet.EachPartition(func(p kgo.FetchTopicPartition) {
+					for _, record := range p.Records {
+						var val model.BasicPayload
 
-			fet.EachPartition(func(p kgo.FetchTopicPartition) {
-				for _, record := range p.Records {
-					var val model.BasicPayload
-
-					err := json.Unmarshal(record.Value, &val)
-					if err != nil {
-						log.Println("error unmarshalling record value")
-						continue
+						err := json.Unmarshal(record.Value, &val)
+						if err != nil {
+							log.Println("error unmarshalling record value")
+							continue
+						}
+						fmt.Printf("Key: %s, Value %+v, from range inside a callback!\n", record.Key, val)
 					}
-					fmt.Printf("Key: %s, Value %+v, from range inside a callback!\n", record.Key, val)
-				}
-			})
+				})
 
-			err := co.kcl.CommitUncommittedOffsets(ctx)
-			if err != nil {
-				co.logger.Error("coudln't commit offsets", zap.Error(err))
+				err := co.kcl.CommitUncommittedOffsets(ctx)
+				if err != nil {
+					co.logger.Error("coudln't commit offsets", zap.Error(err))
+				}
 			}
+			c()
 		}
 	}
 }

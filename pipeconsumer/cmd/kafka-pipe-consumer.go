@@ -18,7 +18,7 @@ func main() {
 
 	// gracefully exit on keyboard interrupt
 	c := make(chan os.Signal, 1)
-	signal.Notify(c, os.Interrupt, syscall.SIGTERM)
+	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	flag.StringVar(&group, "g", "kgo-group", "name of the consumer group")
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
@@ -39,9 +39,8 @@ func main() {
 	}
 
 	pco := pipeconsumer.NewConsumer(kcl, group)
-	pco.PollFetches(context.Background())
+	go pco.PollFetches(context.Background())
 
 	<-c
 	pco.Close()
-	os.Exit(0)
 }
