@@ -5,15 +5,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
-	"time"
 
 	"github.com/EduRuizzo/kafka-course/model"
 	"github.com/twmb/franz-go/pkg/kgo"
 	"go.uber.org/zap"
 )
-
-const pollLoopPeriod = 20 * time.Millisecond
-const pollTimeout = 5 * time.Second
 
 type Consumer struct {
 	kcl    *kgo.Client
@@ -31,7 +27,6 @@ func NewConsumer(kcl *kgo.Client, group string) *Consumer {
 		close:  make(chan bool),
 		group:  group,
 	}
-	co.logger.Info("consumer correctly initialized")
 
 	return co
 }
@@ -46,38 +41,40 @@ func (co *Consumer) Close() {
 func (co *Consumer) PollFetches(ctx context.Context) {
 	co.logger.Info("consumer poll loop started")
 
-	tick := time.NewTicker(pollLoopPeriod)
-
 	for {
+		ctxt, cancel := context.WithCancel(ctx)
+		fc := make(chan kgo.Fetches)
+
+		go func() {
+			fet := co.kcl.PollFetches(ctxt)
+			fc <- fet
+		}()
 		select {
 		case <-co.close:
-			co.logger.Info("consume loop gracefully closed")
+			cancel()
+			co.logger.Info("consume loop gracefully closed", zap.String("context", ctxt.Err().Error()))
+
 			return
-		case <-tick.C:
-			ctxt, c := context.WithTimeout(ctx, pollTimeout)
-			fet := co.kcl.PollFetches(ctxt)
-			select {
-			case <-ctx.Done(): // continue loop if no fetches within timeout
-			default:
-				fet.EachPartition(func(p kgo.FetchTopicPartition) {
-					for _, record := range p.Records {
-						var val model.BasicPayload
+		case fet := <-fc:
+			fet.EachPartition(func(p kgo.FetchTopicPartition) {
+				for _, record := range p.Records {
+					var val model.BasicPayload
 
-						err := json.Unmarshal(record.Value, &val)
-						if err != nil {
-							log.Println("error unmarshalling record value")
-							continue
-						}
-						fmt.Printf("Key: %s, Value %+v, from range inside a callback!\n", record.Key, val)
+					err := json.Unmarshal(record.Value, &val)
+					if err != nil {
+						log.Println("error unmarshalling record value")
+						continue
 					}
-				})
-
-				err := co.kcl.CommitUncommittedOffsets(ctx)
-				if err != nil {
-					co.logger.Error("coudln't commit offsets", zap.Error(err))
+					fmt.Printf("Key: %s, Value %+v, from range inside a callback!\n", record.Key, val)
 				}
+			})
+
+			err := co.kcl.CommitUncommittedOffsets(ctx)
+			if err != nil {
+				co.logger.Error("coudln't commit offsets", zap.Error(err))
 			}
-			c()
+
+			cancel()
 		}
 	}
 }

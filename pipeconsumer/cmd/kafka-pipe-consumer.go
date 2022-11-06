@@ -6,11 +6,13 @@ import (
 	"log"
 	"os"
 	"os/signal"
+	"strings"
 	"syscall"
 
 	"github.com/EduRuizzo/kafka-course/config"
 	"github.com/EduRuizzo/kafka-course/pipeconsumer"
 	"github.com/twmb/franz-go/pkg/kgo"
+	"go.uber.org/zap"
 )
 
 func main() {
@@ -39,6 +41,9 @@ func main() {
 	}
 
 	pco := pipeconsumer.NewConsumer(kcl, group)
+	l, _ := zap.NewProduction()
+	l.Info("kafka consumer created", zap.String("group", group), zap.String("topic", topic), zap.String("host", strings.Join(cfg.SeedBrokers, ",")))
+
 	go pco.PollFetches(context.Background())
 
 	<-c
