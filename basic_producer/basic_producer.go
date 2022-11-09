@@ -74,6 +74,7 @@ func main() {
 	wg.Wait()
 
 	// Alternatively, ProduceSync exists to synchronously produce a batch of records.
+	record.Key = []byte(key + "-2")
 	if err := cl.ProduceSync(ctx, record).FirstErr(); err != nil {
 		log.Printf("record had a produce error while synchronously producing: %v\n", err)
 	}

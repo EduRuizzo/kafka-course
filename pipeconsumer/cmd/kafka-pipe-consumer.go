@@ -44,8 +44,8 @@ func main() {
 	l, _ := zap.NewProduction()
 	l.Info("kafka consumer created", zap.String("group", group), zap.String("topic", topic), zap.String("host", strings.Join(cfg.SeedBrokers, ",")))
 
-	go pco.PollFetches(context.Background())
+	pco.Start(context.Background())
 
-	<-c
+	<-c // Wait for interrupt to gracefully close
 	pco.Close()
 }
