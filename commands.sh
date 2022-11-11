@@ -66,3 +66,24 @@ kafka-configs.sh --bootstrap-server [::1]:9092 --entity-type topics --entity-nam
 kafka-configs.sh --bootstrap-server [::1]:9092 --entity-type topics --entity-name test.topic.config --describe flush.messages
 # back to default
 kafka-configs.sh --bootstrap-server [::1]:9092 --entity-type topics --entity-name test.topic.config --alter --delete-config flush.messages
+
+# Create a test topic named growth-plan, with two partitions and a replication factor of one
+kafka-topics.sh \
+--bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
+--create --topic growth-plan --partitions 2 \
+--replication-factor 1
+
+# Having created the topic, examine it by running the kafka-topics.sh CLI tool
+kafka-topics.sh \
+--bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
+--describe --topic growth-plan
+
+# Next, apply the reassignment file using the kafka-reassign-partitions.sh tool.
+kafka-reassign-partitions.sh \
+--bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
+--reassignment-json-file alter-replicas.json --execute
+
+# Verify changes
+kafka-reassign-partitions.sh \
+--bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
+--reassignment-json-file alter-replicas.json --verify

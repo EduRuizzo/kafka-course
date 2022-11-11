@@ -1,0 +1,22 @@
+{
+    "version": 1,
+    "partitions": [
+        {
+            "topic": "growth-plan",
+            "partition": 0,
+            "replicas": [
+                1002,
+                1001
+            ]
+        },
+        {
+            "topic": "growth-plan",
+            "partition": 1,
+            "replicas": [
+                1001,
+                1002,
+                1003
+            ]
+        }
+    ]
+}
