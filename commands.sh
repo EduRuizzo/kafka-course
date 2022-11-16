@@ -87,3 +87,65 @@ kafka-reassign-partitions.sh \
 kafka-reassign-partitions.sh \
 --bootstrap-server localhost:9092,localhost:9093,localhost:9094 \
 --reassignment-json-file alter-replicas.json --verify
+
+# View log contents
+LOG_DIR=/tmp/kafka-logs && kafka-dump-log.sh --files $LOG_DIR/getting-started-0/00000000000000000066.log --print-data-log
+
+# To demonstrate the Kafka compactor in action, we are going to create a topic named prices with aggressive compaction settings:
+kafka-topics.sh --bootstrap-server [::1]:9092 \
+--create --topic prices --replication-factor 1 --partitions 1 \
+--config "cleanup.policy=compact" \
+--config "delete.retention.ms=100" \
+--config "segment.ms=1" \
+--config "min.cleanable.dirty.ratio=0.01"
+
+#Next, run a console producer:
+kafka-console-producer.sh \
+--broker-list [::1]:9092 --topic prices \
+--property parse.key=true --property key.separator=:
+
+# Now run the consumer. Assuming that the compactor has had a chance to run, the output should
+# be constrained to the unique record keys and their most recent values.
+kafka-console-consumer.sh \
+--bootstrap-server [::1]:9092 \
+--topic prices --from-beginning \
+--property print.key=true
+
+# The active log segment is 00000000000000000005.log. All prior segments have been compacted, leaving
+# hollow snapshots in their place; the remaining unique records were coalesced into 00000000000000000000.log.
+# Out of interest, we can view its contents using the kafka-dump-logs.sh utility:
+kafka-dump-log.sh --print-data-log \
+--files /tmp/kafka-logs/prices-0/00000000000000000000.log
+
+##########
+# SECURITY
+##########
+
+# Generate the private key
+keytool -keystore server.keystore.jks -alias localhost -validity 365 -genkey -keyalg RSA
+
+# You can view the contents of the keystore at any time — by running the following command.
+keytool -list -v -keystore server.keystore.jks
+
+# Create a CA
+openssl req -new -x509 -keyout ca-key -out ca-cert -days 365
+
+# The next two steps will import the resulting ca-cert file to the broker and client truststores. Once
+# imported, the parties will implicitly trust the CA and any certificate signed by the CA.
+keytool -keystore client.truststore.jks -alias CARoot -import -file ca-cert
+keytool -keystore server.truststore.jks -alias CARoot -import -file ca-cert
+
+# Sign the broker certificate.The next step is to generate the certificate signing request on behalf of the broker.
+keytool -keystore server.keystore.jks -alias localhost -certreq -file cert-req
+
+# This produces cert-req, being the signing request. To sign with the CA, run the following command.
+openssl x509 -req -CA ca-cert -CAkey ca-key -in cert-req -out cert-signed -days 365 -CAcreateserial
+
+# The CA certificate must be imported into the server’s keystore under the CARoot alias.
+keytool -keystore server.keystore.jks -alias CARoot -import -file ca-cert
+
+# Then, import the signed certificate into the server’s keystore under the localhost alias.
+keytool -keystore server.keystore.jks -alias localhost -import -file cert-signed
+
+# next step is to install the private key and the signed certificate on the broker. Assuming the keystore file is in /tmp/kafka-ssl, run:
+cp /tmp/kafka-ssl/server.*.jks $KAFKA_HOME/config
