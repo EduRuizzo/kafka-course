@@ -15,4 +15,5 @@ require (
 	github.com/twmb/franz-go/pkg/kmsg v1.2.0 // indirect
 	go.uber.org/atomic v1.7.0 // indirect
 	go.uber.org/multierr v1.6.0 // indirect
+	golang.org/x/crypto v0.0.0-20220817201139-bc19a97f63c8 // indirect
 )

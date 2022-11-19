@@ -18,7 +18,7 @@ import (
 func main() {
 	var group, topic string
 
-	var tls bool
+	var tls, sasl bool
 
 	// gracefully exit on keyboard interrupt
 	c := make(chan os.Signal, 1)
@@ -27,11 +27,12 @@ func main() {
 	flag.StringVar(&group, "g", "kgo-group", "name of the consumer group")
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
 	flag.BoolVar(&tls, "tls", false, "TLS enabled or disabled")
+	flag.BoolVar(&sasl, "sasl", false, "SASL auth enabled or disabled")
 	flag.Parse()
 
 	cfg := config.MustNewClientConfig()
 
-	opts := config.ClientConfigToKafkaClientOpts(&cfg, group, topic, tls)
+	opts := config.ClientConfigToKafkaClientOpts(&cfg, group, topic, tls, sasl)
 
 	kcl, err := kgo.NewClient(opts...)
 	if err != nil {

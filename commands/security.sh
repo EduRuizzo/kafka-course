@@ -61,3 +61,23 @@ openssl pkcs12 -in server.p12 -nokeys -out server.cer.pem
 keytool -importkeystore -srckeystore server.keystore.jks -destkeystore client.p12 -deststoretype PKCS12
 openssl pkcs12 -in client.p12 -nokeys -out client.cer.pem
 openssl pkcs12 -in client.p12 -nodes -nocerts -out client.key.pem
+
+
+######
+# SASL
+######
+#Provision the user (SCRAM)
+kafka-configs.sh --bootstrap-server [::1]:9092 --alter --add-config 'SCRAM-SHA-512=[password=edu-secret]' --entity-type users --entity-name edu
+kafka-configs.sh --zookeeper localhost:2181 --describe --entity-type users --entity-name edu
+# Credentials may be deleted using the --delete-config flag:
+kafka-configs.sh --bootstrap-server [::1]:9092 --alter --delete-config 'SCRAM-SHA-512' --entity-type users --entity-name alice
+
+# Interbroker authentication
+# Although we changed client authentication to SASL_SSL, the interbroker listener remained SSL.
+# Start by creating a set of admin credentials (replace admin and admin-secret as appropriate):
+kafka-configs.sh --bootstrap-server [::1]:9092 --alter --add-config 'SCRAM-SHA-512=[password=admin-secret]' --entity-type users --entity-name admin
+
+# When starting the Kafka broker, it needs to be told where to find the JAAS configuration. This can be
+# accomplished by setting the java.security.auth.login.config system property and removing it in the server.properties
+JAAS_CONFIG=$KAFKA_HOME/config/kafka_server_jaas.conf KAFKA_OPTS=-Djava.security.auth.login.config=$JAAS_CONFIG $KAFKA_HOME/bin/kafka-server-start.sh \
+$KAFKA_HOME/config/server.properties
