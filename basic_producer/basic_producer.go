@@ -24,7 +24,7 @@ func main() {
 	flag.StringVar(&name, "n", "JoJo", "name for the record value")
 	flag.Parse()
 
-	cfg := config.MustNewClient()
+	cfg := config.MustNewClientConfig()
 
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.

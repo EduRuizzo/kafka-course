@@ -18,23 +18,22 @@ import (
 func main() {
 	var group, topic string
 
+	var tls bool
+
 	// gracefully exit on keyboard interrupt
 	c := make(chan os.Signal, 1)
 	signal.Notify(c, syscall.SIGTERM, syscall.SIGINT)
 
 	flag.StringVar(&group, "g", "kgo-group", "name of the consumer group")
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
+	flag.BoolVar(&tls, "tls", false, "TLS enabled or disabled")
 	flag.Parse()
 
-	cfg := config.MustNewClient()
+	cfg := config.MustNewClientConfig()
 
-	kcl, err := kgo.NewClient(
-		kgo.SeedBrokers(cfg.SeedBrokers...),
-		kgo.ConsumerGroup(group),
-		kgo.ConsumeTopics(topic),
-		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
-		kgo.DisableAutoCommit(),
-	)
+	opts := config.ClientConfigToKafkaClientOpts(&cfg, group, topic, tls)
+
+	kcl, err := kgo.NewClient(opts...)
 	if err != nil {
 		kcl.Close()
 		log.Panic(err)

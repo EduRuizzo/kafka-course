@@ -24,3 +24,5 @@ go.work
 data/
 
 *.jks
+*.pem
+.vscode

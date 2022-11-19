@@ -30,7 +30,7 @@ services:
     ports:
       - 9000:9000
     environment:
-      KAFKA_BROKERCONNECT: kafka:29092
+      KAFKA_BROKERCONNECT: ${KAFKA_BROKERCONNECT:-kafka:29092}
     depends_on:
       - kafka
   kafka-consumer:

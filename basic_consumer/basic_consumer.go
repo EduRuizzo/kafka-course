@@ -22,7 +22,7 @@ func main() {
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
 	flag.Parse()
 
-	cfg := config.MustNewClient()
+	cfg := config.MustNewClientConfig()
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
 	cl, err := kgo.NewClient(
