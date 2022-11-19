@@ -81,3 +81,18 @@ kafka-configs.sh --bootstrap-server [::1]:9092 --alter --add-config 'SCRAM-SHA-5
 # accomplished by setting the java.security.auth.login.config system property and removing it in the server.properties
 JAAS_CONFIG=$KAFKA_HOME/config/kafka_server_jaas.conf KAFKA_OPTS=-Djava.security.auth.login.config=$JAAS_CONFIG $KAFKA_HOME/bin/kafka-server-start.sh \
 $KAFKA_HOME/config/server.properties
+
+######
+# Delegation tokens
+######
+# To create a delegation token, use the kafka-delegation-tokens.sh CLI
+$KAFKA_HOME/bin/kafka-delegation-tokens.sh --bootstrap-server [::1]:9094 --command-config $KAFKA_HOME/config/client.properties \
+--create --max-life-time-period -1 --renewer-principal User:admin
+
+#To list delegation tokens, invoke kafka-delegation-tokens.sh with the --describe switch:
+$KAFKA_HOME/bin/kafka-delegation-tokens.sh --bootstrap-server [::1]:9094 --command-config $KAFKA_HOME/config/client.properties --describe
+
+#CLI tools to verify the configuration. In the example below, we are using
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server  [::1]:9094 --command-config $KAFKA_HOME/config/client.properties --list
+# Start Kafdrop with SASL broker after configuring it
+java -jar kafdrop-3.30.0.jar --kafka.brokerCOnnect=[::1]:9094
