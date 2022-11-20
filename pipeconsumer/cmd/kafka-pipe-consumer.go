@@ -32,7 +32,13 @@ func main() {
 
 	cfg := config.MustNewClientConfig()
 
-	opts := config.ClientConfigToKafkaClientOpts(&cfg, group, topic, tls, sasl)
+	opts := config.ClientSecurityConfigToKafkaClientOpts(&cfg, tls, sasl)
+	opts = append(opts,
+		kgo.ConsumerGroup(group),
+		kgo.ConsumeTopics(topic),
+		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
+		kgo.DisableAutoCommit(),
+	)
 
 	kcl, err := kgo.NewClient(opts...)
 	if err != nil {

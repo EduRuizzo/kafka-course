@@ -96,3 +96,32 @@ $KAFKA_HOME/bin/kafka-delegation-tokens.sh --bootstrap-server [::1]:9094 --comma
 $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server  [::1]:9094 --command-config $KAFKA_HOME/config/client.properties --list
 # Start Kafdrop with SASL broker after configuring it
 java -jar kafdrop-3.30.0.jar --kafka.brokerCOnnect=[::1]:9094
+
+######
+# ACL (Authorization)
+#####
+
+# List ACLs
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 --list
+
+#This particular problem can be fixed by adding read and write permissions to user edu:
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 \
+--add --allow-principal User:edu --operation Read --operation Write --topic getting-started
+
+# we have set the property enable.idempotence to true. this property requires cluster-level permission for the IdempotentWrite operation:
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 \
+--add --allow-principal User:edu --operation IdempotentWrite --cluster
+
+# The ACLs for topics are distinct to the ACLs for consumer groups, as the two are treated as distinct resources.
+#  To fix the issue above, add the Read permission on the consumer group:
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 \
+--add --allow-principal User:edu --operation Read --group kgo-group
+
+# Removing permissions
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 \
+--remove --allow-principal User:edu --operation Read --operation Write --topic getting-started --force
+
+# Bulk remove permissions
+$KAFKA_HOME/bin/kafka-acls.sh --command-config $KAFKA_HOME/config/client.properties --bootstrap-server [::1]:9094 \
+--remove --resource-pattern-type=any --topic getting-started --force
+

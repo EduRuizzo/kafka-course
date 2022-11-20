@@ -64,13 +64,8 @@ func NewTLSConfig(clientCertFile, clientKeyFile, caCertFile string, clientAuth b
 	return &tlsConfig, err
 }
 
-func ClientConfigToKafkaClientOpts(cfg *ClientConfig, group, topic string, tlsOpt, sasl bool) []kgo.Opt {
-	opts := []kgo.Opt{
-		kgo.ConsumerGroup(group),
-		kgo.ConsumeTopics(topic),
-		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
-		kgo.DisableAutoCommit(),
-	}
+func ClientSecurityConfigToKafkaClientOpts(cfg *ClientConfig, tlsOpt, sasl bool) []kgo.Opt {
+	opts := []kgo.Opt{}
 
 	if tlsOpt {
 		tlsCfg, err := NewTLSConfig(cfg.ClientCertFile, cfg.ClientKeyFile, cfg.ServerCertFile, true)

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"log"
+	"os"
 	"sync"
 	"time"
 
@@ -19,20 +20,24 @@ const to = 3
 
 func main() {
 	topic, key, name := "", "", ""
+
+	var tls, sasl bool
+
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
 	flag.StringVar(&key, "k", "myKey", "kafka key")
 	flag.StringVar(&name, "n", "JoJo", "name for the record value")
+	flag.BoolVar(&tls, "tls", false, "TLS enabled or disabled")
+	flag.BoolVar(&sasl, "sasl", false, "SASL auth enabled or disabled")
 	flag.Parse()
+	os.Setenv("SERVER_CERT_FILE", "../certs/server.cer.pem")
 
 	cfg := config.MustNewClientConfig()
 
+	opts := config.ClientSecurityConfigToKafkaClientOpts(&cfg, tls, sasl)
+
 	// One client can both produce and consume!
 	// Consuming can either be direct (no consumer group), or through a group. Below, we use a group.
-	cl, err := kgo.NewClient(
-		kgo.SeedBrokers(cfg.SeedBrokers...),
-		// kgo.ConsumerGroup("my-group-identifier"),
-		// kgo.ConsumeTopics("foo"),
-	)
+	cl, err := kgo.NewClient(opts...)
 	if err != nil {
 		log.Fatal(err)
 	}
