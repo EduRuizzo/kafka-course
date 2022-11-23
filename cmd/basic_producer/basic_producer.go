@@ -29,7 +29,7 @@ func main() {
 	flag.BoolVar(&tls, "tls", false, "TLS enabled or disabled")
 	flag.BoolVar(&sasl, "sasl", false, "SASL auth enabled or disabled")
 	flag.Parse()
-	os.Setenv("SERVER_CERT_FILE", "../certs/server.cer.pem")
+	os.Setenv("SERVER_CERT_FILE", "../../certs/server.cer.pem")
 
 	cfg := config.MustNewClientConfig()
 

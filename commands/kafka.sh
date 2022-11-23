@@ -116,3 +116,11 @@ kafka-console-consumer.sh \
 # Out of interest, we can view its contents using the kafka-dump-logs.sh utility:
 kafka-dump-log.sh --print-data-log \
 --files /tmp/kafka-logs/prices-0/00000000000000000000.log
+
+# TRANSACTIONS
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server [::1]:9094 \
+--command-config $KAFKA_HOME/config/client.properties \
+--create --topic tx-input --partitions 3 --replication-factor 1
+$KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server [::1]:9094 \
+--command-config $KAFKA_HOME/config/client.properties \
+--create --topic tx-output --partitions 3 --replication-factor 1

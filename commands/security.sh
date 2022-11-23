@@ -95,7 +95,7 @@ $KAFKA_HOME/bin/kafka-delegation-tokens.sh --bootstrap-server [::1]:9094 --comma
 #CLI tools to verify the configuration. In the example below, we are using
 $KAFKA_HOME/bin/kafka-topics.sh --bootstrap-server  [::1]:9094 --command-config $KAFKA_HOME/config/client.properties --list
 # Start Kafdrop with SASL broker after configuring it
-java -jar kafdrop-3.30.0.jar --kafka.brokerCOnnect=[::1]:9094
+java -jar kafdrop-3.30.0.jar --kafka.brokerConnect=[::1]:9094
 
 ######
 # ACL (Authorization)

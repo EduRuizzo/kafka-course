@@ -4,6 +4,6 @@ WORKDIR /go/src/kafka-consumer
 
 COPY ./ ./
 
-RUN go install ./pipeconsumer/cmd/kafka-pipe-consumer.go
+RUN go install ./cmd/pipe_consumer/kafka-pipe-consumer.go
 
 CMD ["/go/bin/kafka-pipe-consumer"]

@@ -18,7 +18,7 @@ import (
 func main() {
 	var group, topic string
 
-	var tls, sasl bool
+	var tls, sasl, transactional bool
 
 	// gracefully exit on keyboard interrupt
 	c := make(chan os.Signal, 1)
@@ -28,6 +28,7 @@ func main() {
 	flag.StringVar(&topic, "t", "getting-started", "kafka topic")
 	flag.BoolVar(&tls, "tls", false, "TLS enabled or disabled")
 	flag.BoolVar(&sasl, "sasl", false, "SASL auth enabled or disabled")
+	flag.BoolVar(&transactional, "tr", false, "transactional consumer")
 	flag.Parse()
 
 	cfg := config.MustNewClientConfig()
@@ -39,6 +40,13 @@ func main() {
 		kgo.ConsumeResetOffset(kgo.NewOffset().AtStart()),
 		kgo.DisableAutoCommit(),
 	)
+
+	if transactional { // only read messages that have been written as part of committed transactions
+		opts = append(opts,
+			kgo.FetchIsolationLevel(kgo.ReadCommitted()),
+			kgo.RequireStableFetchOffsets(),
+		)
+	}
 
 	kcl, err := kgo.NewClient(opts...)
 	if err != nil {

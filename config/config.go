@@ -67,7 +67,7 @@ func NewTLSConfig(clientCertFile, clientKeyFile, caCertFile string, clientAuth b
 func ClientSecurityConfigToKafkaClientOpts(cfg *ClientConfig, tlsOpt, sasl bool) []kgo.Opt {
 	opts := []kgo.Opt{}
 
-	if tlsOpt {
+	if tlsOpt { // Mutual TLS Authentication
 		tlsCfg, err := NewTLSConfig(cfg.ClientCertFile, cfg.ClientKeyFile, cfg.ServerCertFile, true)
 		if err != nil {
 			log.Panic(err)
